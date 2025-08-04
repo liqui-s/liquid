@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        #logoutBtn {
+            padding: 10px 20px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #logoutBtn:hover {
+            background-color: #da190b;
+        }
+        .product-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .product-item {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+        }
+        .product-item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .stock-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .stock-toggle label {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Product Stock Management</h1>
+        <button id="logoutBtn">Logout</button>
+    </div>
+
+    <div id="productList" class="product-list">
+        <!-- Products will be dynamically inserted here -->
+    </div>
+
+    <script>
+        // Check for admin session
+        if (sessionStorage.getItem('isAdmin') !== 'true') {
+            window.location.href = 'admin.html';
+        }
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            sessionStorage.removeItem('isAdmin');
+            window.location.href = 'admin.html';
+        });
+
+        // Product loading and stock management
+        document.addEventListener('DOMContentLoaded', () => {
+            const productList = document.getElementById('productList');
+            let stockStatus = JSON.parse(localStorage.getItem('stockStatus')) || {};
+
+            fetch('products.json')
+                .then(response => response.json())
+                .then(products => {
+                    products.forEach(product => {
+                        const productItem = document.createElement('div');
+                        productItem.className = 'product-item';
+                        productItem.innerHTML = `
+                            <img src="${product.image}" alt="${product.name}">
+                            <h3>${product.name}</h3>
+                            <p>${product.price}</p>
+                            <div class="stock-toggle">
+                                <label for="stock-${product.id}">In Stock:</label>
+                                <input type="checkbox" id="stock-${product.id}" data-product-id="${product.id}" ${stockStatus[product.id] !== false ? 'checked' : ''}>
+                            </div>
+                        `;
+                        productList.appendChild(productItem);
+                    });
+
+                    // Add event listeners to checkboxes
+                    document.querySelectorAll('.stock-toggle input').forEach(checkbox => {
+                        checkbox.addEventListener('change', (event) => {
+                            const productId = event.target.dataset.productId;
+                            stockStatus[productId] = event.target.checked;
+                            localStorage.setItem('stockStatus', JSON.stringify(stockStatus));
+                        });
+                    });
+                });
+        });
+    </script>
+</body>
+</html>
